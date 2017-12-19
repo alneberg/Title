@@ -1,0 +1,248 @@
+\chapter{Theory}
+This chapter will introduce the research fields of genomics and metagenomics, the specific problem of clustering metagenomic sequences and present the program CONCOCt, a statistical algorithm aimed at solving this problem. The chapter is concluded with a section where published works related to clustering metagenomic sequences is presented.
+
+\section{Genomics}
+Genomics can be described as the research field devoted to determine the DNA sequence of individual cells or organisms, and this procedure has been revolutionised during the past decades \parencite{Mardis2008a}. As an example, one of the major milestones in genomics, the first sequencing and publication of the human genome \parencite{Venter2001}, demanded an immense effort and took billions of dollars to complete in 2001, while the cost for sequencing a human genome in 2010 was down to a few thousand dollars and possible to accomplish in a single day on a single machine \parencite{Venter2010}.
+
+The major changes behind this revolution are more efficient sample preparation step and the development of massive parallel sequencing technology \parencite{Mardis2008b}. Laboratory intensive bacterial cloning of specific fragments has been replaced by whole genome random shotgun sequencing, drastically improving the time and cost efficiency in the sample preparation step while increasing the demand for computational post-processing \parencite{Mardis2008b}. Correspondingly, since the first commercially available machines arrived in 2004, massive parallel sequencing or 'next generation sequencing' techniques has developed extremely fast \parencite{Mardis2008b}. The throughput from a modern Illumina HiSeq machine is an increase with a factor $10^4$ compared to a Sanger chemistry sequencing machine \parencite{Droge2012}. Among other important scientific results, this has lead to the sequencing of more than 1000 different microbial genomes \parencite{Kelley2010}.
+
+\section{Metagenomics}
+With traditional genetic studies of bacteria in order to study and sequence a specific bacterium, it first has to be isolated and cultured in a laboratory \parencite{Kelley2010}. However, it was discovered that laboratory culturing is not possible for a majority of microbes existing in our environment and in our (very) close surroundings \parencite{Hugenholtz2008b}. Metagenomic studies try to overcome this problem and also enables studies of microbial community dynamics by sequencing the DNA in the environmental sample directly \parencite{Chatterji2008}. 
+ 
+There are two fundamentally different ways of conducting metagenomic studies: amplicon sequencing or random shotgun sequencing \parencite{Droge2012}. Amplicon sequencing extracts and amplifies specific regions, e.g. ribosomal genes, that are particularly informative from all genomes and use these to identify species present in the community \parencite{Droge2012}. This method is effectively used to determine presence and abundance of known taxonomic units, but says little about unknown ones \parencite{Droge2012}. Random shotgun sequencing on the other hand aim at sequence as much as possible of the DNA the sample contains, enabling the discovery of novel genomes if the sequence depth is sufficient \parencite{Droge2012}. In this thesis, only random shotgun sequencing will be considered.
+
+Massive parallel sequencing have opened the doors for a large number of metagenomic surveys, improving the knowledge about biodiversity in several habitats \parencite{Weber2011}. Classic examples of metagenomic studies are the sequencing samples from ocean water, microbial communities on human skin or in the human gut and a water ecosystem around an abandoned mine \parencite{Kelley2010}. While being absolutely necessary for sequencing complex metagenomic communities, massive parallel sequencing have also increased efficiency demands on most bioinformatics software \parencite{Droge2012}. For metagenomics, one of the major bottlenecks in the bioinformatic analysis is the clustering of sequences into taxonomic units \parencite{Strous2012a}.
+
+\section{Clustering Metagenomic Sequences}
+The ultimate aim of clustering, or binning, metagenomic sequences, is to put a taxonomic identifier on each sequence. The original definition of the term binning referred to clustering at the exact population level, but has been extended to clustering together sequences from a common higher taxonomic clade, if more exact clustering is not possible \parencite{Droge2012}. This section will explain the different features of the data set that can be taken into consideration to solve the problem of clustering metagenomic sequences. 
+
+\subsection{Binning Reads or Contigs}
+The output from massive parallel sequencing machines are short sequences, normally of length around 100 base pairs (bp), called reads. Contigs (contiguous sequences) are normally constructed from reads with an assembly algorithm, an assembler, producing longer sequences and reducing the data size \parencite{Droge2012}.  Before assemblers that worked well for metagenomic samples was developed, binning reads was considered more reliable, since assembly errors then could be avoided \parencite{Chatterji2008}. This approach is however unfeasible with the further development of massive parallel sequencing, where the throughput have increased to up to 600 Gb per run. Binning reads based on composition would in that scenario be very erroneous and time consuming \parencite{Droge2012}. Fortunately, assemblers specifically designed for metagenomic data sets now exists and are considered reliable \parencite{Strous2012a}. 
+
+\subsection{Nucleotide Composition}
+One important feature that previously has been used for binning metagenomic sequences is the $k$-mer frequency pattern, often named the genomic signature or nucleotide composition
+\parencite{Mchardy2007, Chatterji2008}. A $k$-mer is an oligonucleotide of length $k$, and different genomes have different biases in their usage of these. Different values for $k$ can be used, with a larger feature space associated with higher values \parencite{Chatterji2008}. The reason that biases in $k$-mer frequencies occur is that various evolutionary forces affect even non-coding regions of the genome. The most important of these are ``species-specific codon preference, constrains because of DNA superstructure and G + C content maintenance, and biases that are introduced
+by the replication machinery'' \parencite{Kelley2010}. What $k$ to use is not clearly established, but a large value is connected to a higher memory demand for the algorithm. $k=4$ \parencite{Teeling2004}, $k=5$ \parencite{Mchardy2007} and $k=6$ \parencite{Chatterji2008} are popular choices.
+
+\subsection{Coverage}
+Species and populations in a metagenomic sample are commonly present at different abundances. On a sequence level, abundance is approximately measured by something called coverage. For a single nucleotide in a contig, the coverage is the number of reads aligned over that position, that is, the number of times that specific nucleotide have been sequenced. The coverage for an entire contig can be calculated by averaging the coverage over all base pairs in that contig. Since sequences originating from the same population should have similar coverage, this can be a useful feature to use for clustering metagenomic contigs. 
+
+
+
+\section{A Statistical Model and Learning Algorithms}
+When an exact solution to a problem cannot be constructed as an algorithm, for example when scanning emails for spams, an alternative is to use learning algorithms to approximate an exact solution \parencite{Alpaydin2010}. These algorithms have a vast number of applications and are the focus of machine learning, data mining, artificial intelligence and statistics \parencite{Hastie2001}. 
+\begin{quote}
+\emph{``What we lack in knowledge, we make up for in data.''} \parencite{Alpaydin2010}
+\end{quote}
+This section will present a statistical model useful for describing a data set prior to clustering and several algorithms useful for finding the actual clusters.
+
+\subsection{Gaussian Mixture Models}
+When each cluster in a data set can be described by a Gaussian distribution, which is a common assumption, the combined data set is best described by something called a Gaussian Mixture Model. The general form of the Gaussian density function for a non-singular covariance matrix can be written \parencite{gut2009}:
+\begin{align*}
+  \phi(x;\mu_m,\Sigma_m) = \left(\frac{1}{2\pi}\right)^{n/2}\frac{1}{\sqrt{|\Sigma_m|}}\operatorname{exp}\left\{-\frac{1}{2}(x-\mu)^T\Sigma_m^{-1}(x-\mu)\right\}
+\end{align*}
+With mean $\mu_m$ and covariance matrix $\Sigma_m$. In the common 1-dimensional case, the covariance matrix is a single scalar, named the variance. Mixture models are used to describe several regular probability models within a single density function. The mixture model is described as consisting of several components, or clusters, and the proportion of a component $m$ within the mixture is denoted $\alpha_m$. In a data set originating from a mixture model, each data point originates from a single component, and on average $\alpha_m$ of the data points, originates from cluster $m$. Any probability distribution could be used within a mixture model, but the Gaussian distribution is the most common one \parencite{Alpaydin2010}. The general mixture model for a probability distribution with density function $p(x;\theta_m)$ has the probability 
+\begin{align*}
+    &f(x) = \sum_{m=1}^{M}\alpha_{m} p(x;\theta_{m}), \\
+    &\sum_{m} \alpha_{m} = 1, 0\leq\alpha_{m}\leq 1
+\end{align*}
+and the specific case of a two component Gaussian mixture model has density function
+\begin{align} \label{gmm_2_dens}
+  &f(x) = \alpha_1\phi(x;\mu_1,\Sigma_1) + \alpha_2\phi(x;\mu_2,\Sigma_2)
+\end{align}
+Figure \ref{fig:gmm_3_2} shows an example of data generated from a two dimensional Gaussian mixture model with three components and parameters
+\begin{align}
+  \mu_1 &= \left[
+    \begin{array}{cc}
+      0, & 0
+    \end{array}
+    \right] 
+  &
+  \Sigma_1 &= 
+  \left[
+  \begin{array}{cc}
+    3, & 0 \\
+    0, & 1 
+  \end{array}
+  \right] 
+  &
+  \alpha_1 &= 0.4 \label{gmm1}
+  \\
+  \mu_2 &= \left[
+    \begin{array}{cc}
+      3, & 3
+    \end{array}
+    \right] 
+  &
+  \Sigma_2 &= 
+  \left[
+  \begin{array}{cc}
+    1, & 0 \\
+    0, & 1 
+  \end{array}
+  \right]   
+  &
+  \alpha_2 &= 0.5 \label{gmm2}
+\\
+  \mu_3 &= \left[
+    \begin{array}{cc}
+      -5, & 2
+    \end{array}
+    \right] 
+  &
+  \Sigma_3 &= 
+  \left[
+  \begin{array}{cc}
+    4, & 2 \\
+    2, & 3 
+  \end{array}
+  \right]
+  &
+  \alpha_3 &= 0.1 \label{gmm3}
+\end{align}
+
+\begin{figure}[h!t]
+  \begin{minipage}[b]{\linewidth}
+    \centering
+    \includegraphics[trim=30.0mm 55.0mm 25.0mm 55.0mm, clip, scale=0.5]{./Figures/notebooks/gmm_3_2_d0d8b17.png}
+    \caption{\small{\emph{Data points generated from a Gaussian Mixture Model with three components $Y_1$, $Y_2$ and $Y_3$ with parameters given in equations \ref{gmm1}, \ref{gmm2} and \ref{gmm3}. The 600 data points in total are distributed among the component as follows: $243$ from $Y_1$, $295$ from $Y_2$ and $62$ from $Y_3$.}}}
+    \label{fig:gmm_3_2}
+  \end{minipage}
+\end{figure}
+
+\subsection{Unsupervised Learning}
+In the machine learning literature, a distinction between supervised and unsupervised learning is usually made \parencite{Marsland2009,Hastie2001}. Supervised learning is a category of algorithms where training data, consisting of correct input and output mappings, are used to train the algorithm into a generalised predictor \parencite{Hastie2001}. With unsupervised learning, on the other hand, the algorithm is not given a training set, but instead the algorithm could be said to cluster data points based on some similarity measure \parencite{Marsland2009}. A more mathematical way of formulate this is that the algorithm is given observations from a probability distribution and the task is to estimate properties of this distribution without further information (supervision) \parencite{Hastie2001}.
+
+Clustering is a type of unsupervised learning where data points are to be grouped together based on a similarity or distance measure \parencite{Hastie2001}. The goal is to minimise the distance between data points assigned to the same cluster \parencite{Hastie2001}. The choice of a distance measure is subjective and has to be adapted to the structure of the modelled data \parencite{Hastie2001}.
+
+\subsection{K-means}
+One of the simplest, and yet most popular, clustering methods available is the \emph{K-means} algorithm \parencite{Hastie2001}. The name is explained by the $K$ number of mean vectors that are to be estimated from the data and when these are found, each data point would be assigned to the closest one \parencite{Alpaydin2010}. It is an iterative procedure where two steps are repeated until convergence, given an initial guess for the mean vectors \parencite{Alpaydin2010}:
+\begin{itemize}
+  \item Assign each data point to the closest mean vector.
+  \item Update the mean vectors by averaging all points assigned to its group.
+\end{itemize}
+
+This is a local search algorithm that is guaranteed to converge but might not find a global optimum \parencite{Hastie2001}. The K-means algorithm is defined with a distance measure of a squared standard Euclidean one. As an implicit consequence the data points located far away from the centres will have a large impact on the results, making the method sensitive to outliers \parencite{Hastie2001}. 
+
+\subsection{Expectation Maximisation}
+A similar method to the K-means algorithm, but with a more probabilistic approach, is the Expectation Maximizaiton algorithm (EM) \parencite{Alpaydin2010}. It aims to maximize the likelihood of the sample and thereby estimate the unknown parameters of a distribution. As an example, a two component Gaussian Mixture model will be used to describe how the algorithm works, but the algorithm is general enough to work with any type of parameter estimation in models where unobserved variables are present \parencite{Hastie2001}. Given the mixture model defined in \ref{gmm_2_dens} the log-likelihood function is:
+\begin{align*}
+  l(\theta; \textbf{Z}) = \sum_{i=1}^{N}\operatorname{log}[\alpha_1\phi_{\theta_1}(y_i) + \alpha_2\phi_{\theta_2}(y_i)]
+\end{align*}
+The maximization problem of this likelihood function does not have an analytic solution, but we are left with an numerical iterative procedure. Furthermore, the sum inside the logarithm makes it even difficult to solve this optimisation problem numerically. The EM algorithm offers a way around this, where certain latent variables $\Delta_i$ are introduced:
+\begin{align*}
+  \Delta_i = 
+  \begin{cases}
+    0, & \mbox{if } y_i \mbox{ originates from } Y_1 \\
+    1, & \mbox{if } y_i \mbox{ originates from } Y_2
+  \end{cases}
+\end{align*}
+Using these latent variables, the likelihood expression can be simplified to
+\begin{align*}
+  l(\theta; \textbf{Z}, \Delta) = \sum_{i=1}^{N}&[(1-\Delta_i)\operatorname{log}\phi_{\theta_1}(y_i) + \Delta_i\operatorname{log}\phi_{\theta_2}(y_i)] \\
+  & + \sum_{i=1}^{N}[(1-\Delta_i)\operatorname{log}\alpha_1+\Delta_i\operatorname{log}\alpha_2]
+\end{align*}
+Thus removing the sum of terms within the logarithm. If one could assume that the latent variables $\Delta_i$ were known, the maximisation of the likelihood would have an analytic solution. However, since the values of the latent variables are unknown, they need to be substituted with their \emph{expected} values, given the mixture parameters and the data. The logic behind this is recursive, and can be summarised in two steps:
+\begin{itemize}
+  \item \emph{Expectation Step:} Soft assignment, responsibilities are calculated given the current parameter estimate.
+  \item \emph{Maximisation Step:} Weighted maximum likelihood estimates are used to find a new estimate for the parameters.
+\end{itemize}
+Soft assignment is a concept where a data point is not necessarily assigned to a single component (or cluster), but rather given a likelihood of belonging to each component, according to each respective density. This iterative procedure needs an initialisation, or a starting guess, where different methods can be used. One of these are to just choose two data points randomly, and assign these as $\hat{\mu_1}$ and $\hat{\mu_2}$ respectively. The variances can both initially be set to the overall sample variance and the mixing proportion can be uniformly set; $\hat{\pi} = [0.5,0.5]$. A detailed description of the EM algorithm for the two-component Gaussian Mixture is shown in \parencite{Hastie2001} page 275: 
+\begin{enumerate}
+\item Take initial guesses for the parameters $\hat{\mu}_1$, $\hat{\sigma}_1^2$, $\hat{\mu}_2$, $\hat{\sigma}_2^2$, $\hat{\pi}$.
+\item \emph{Expectation Step:} compute the responsibilities
+  \begin{align*}
+    \hat{\gamma}_i = \frac{\hat{\pi}\phi_{\hat{\theta}_2}(y_i)}{(1-\hat{\pi})\phi_{\hat{\theta}_1}(y_i) + \hat{\pi}\phi_{\hat{\theta}_2}(y_i)}, i=1,2,\dots,N 
+  \end{align*}
+\item \emph{Maximisation Step:} compute the weighted means and variances:
+  \begin{align*}
+    \hat{\mu}_1 = \frac{\sum_{i=1}^N(1-\hat{\gamma_i})y_i}{\sum_{i=1}^N(1-\hat{\gamma_i})},&
+\hspace{15 mm} 
+    \hat{\sigma}_1^2 = \frac{\sum_{i=1}^N(1-\hat{\gamma_i})(y_i-\hat{\mu}_1)^2}{\sum_{i=1}^N(1-\hat{\gamma_i})}, \\
+    \hat{\mu}_2 = \frac{\sum_{i=1}^N\hat{\gamma_i}y_i}{\sum_{i=1}^N\hat{\gamma_i}},&
+\hspace{15 mm}
+    \hat{\sigma}_2^2 = \frac{\sum_{i=1}^N\hat{\gamma_i}(y_i-\hat{\mu}_2)^2}{\sum_{i=1}^N\hat{\gamma_i}},
+  \end{align*}
+and the mixing probability $\hat{\pi}=\sum_{i=1}^N \hat{\gamma}_i/N$.
+\item Iterate steps 2 and 3 until convergence.
+\end{enumerate}
+Figure \ref{fig:em_gmm_3_2} shows the resulting clustering classifications for a three component Gaussian mixture model. The algorithm is quite successful in this case, the parameters are quite accurately estimated and only a few data points are misclassified. The misclassified points are shown in figure \ref{fig:em_error_gmm_3_2}, all located in the middle of two components.
+
+
+\begin{figure}[h!t]
+  \begin{minipage}[b]{\linewidth}
+    \centering
+    \includegraphics[trim=30.0mm 55.0mm 25.0mm 55.0mm, clip, scale=0.5]{./Figures/notebooks/em_gmm_3_2_6228755.png}
+    \caption{\small{\emph{A three component Gaussian mixture model estimated using the data from figure \ref{fig:gmm_3_2}. The small dots represent data points, coloured according to the component with highest responsibility. The ellipses show a cross section of the estimated density functions for each component.}}}
+  \label{fig:em_gmm_3_2}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[h!t]
+  \begin{minipage}[b]{\linewidth}
+    \centering
+    \includegraphics[trim=30.0mm 55.0mm 25.0mm 55.0mm, clip, scale=0.5]{./Figures/notebooks/em_error_gmm_3_2_6228755.png}
+    \caption{\small{\emph{Red dots show misclassified data points in figure \ref{fig:em_gmm_3_2} compared to figure \ref{fig:gmm_3_2}.}}}
+  \label{fig:em_error_gmm_3_2}
+  \end{minipage}
+\end{figure}
+
+\subsection{Principal Component Analysis (PCA)}
+Slightly different from the tasks of the previous mentioned algorithms is the task of reducing the dimensionality of the data and thereby the problem. There may be different reasons for wanting to decrease the number of dimensions where algorithm efficiency or risk of overfitting are some. The unsupervised method Principal Component Analysis (PCA) does exactly this through a linear projection of the data to a space with less dimensions. The choice of linear projection is done in such a way that the data variance in the resulting space is maximised, aiming at avoiding or limiting the information loss due to the transformation. \parencite{Alpaydin2010}
+
+PCA reduces the dimensions of the data from $D$ to $K$ and  does so by finding $K$ orthogonal vectors that form the new dimensions. These vectors, limited to be of length 1, are called the principal components of the data. It can be showed that all principal components are eigenvectors of the sample covariance matrix for the data. To achieve the dimensional reduction, the vectors are ordered according to the corresponding eigenvalues from highest to lowest and the $K$ first principal components are chosen. Among all linear projections of the data from $D$ to $K$ dimensions, this conserves maximum sample variance to the destination space. The number of principal components to project onto can be chosen by looking at the fraction of variance conserved by the transformation, calculated directly using all eigenvalues $\lambda_i$:
+\begin{align*}
+  \frac{\sum_i^K\lambda_i}{\sum_i^D \lambda_i}
+\end{align*}
+PCA is often successful for reducing the number of dimensions when the original dimensions are highly correlated, since then a small number of eigenvalues will be large and together make up for a large proportion of the sample variance. \parencite{Alpaydin2010}
+
+\section{Existing Methods}
+A majority of algorithms present for binning are dependent on a reference database, used either for direct alignment or for constructing models \parencite{Mande2012}. This similarity-based approach is however very risky since the current set of sequenced organisms consists of a very biased sample for microbes \parencite{Leung2011}. The methods that are presented here are instead mostly independent of databases and are either based on the genomic composition, some measure of genomic abundance or a combination of both. 
+
+Out of the algorithms reviewed here, clustering contigs is explicitly mentioned in \parencite{Kelley2010,Weber2011, Wang2012, Strous2012a}. Meanwhile, other algorithms are explicitly developed for binning reads \parencite{Wu2011b,Tanaseichuk2012a} and one \parencite{Chatterji2008} was developed for usage on longer reads, i.e. on machines with lower throughput. 
+
+The most common approach for modelling abundance is to consider words, $l$-mers, that refer to slightly longer oligonucleotides than $k$-mers, count the occurrences of these within reads, and then cluster the reads based on the number of occurrences. The theory that makes this possible is that sufficiently large $l$ will make most words unique in the sense that only one organism will contain that word and more abundant organisms will have $l$-mers that occur more often. Typically $l$ is chosen between $10$ and $20$, and the methods have been quite successful for binning reads when the abundance ratio is greater than $2:1$ \parencite{Wu2011b,Tanaseichuk2012}. This approach can be formalised using the Lander-Waterman model \parencite{Lander1988} further developed into some mixture of Poisson distributions \parencite{Wu2011b,Tanaseichuk2012}. Some algorithms also use other information sources to further improve the clustering; the estimated genome size is used in \parencite{Wu2011b} and information from paired-end reads is used in \parencite{Tanaseichuk2012}. Abundance based algorithms have also been suggested to be combined with composition based ones, to achieve higher performance \parencite{Wu2011b}. Some composition based algorithms already uses the coverage for each read as an information source to separate reads from different abundant genomes  \parencite{Chatterji2008}.
+
+\begin{table}[ht!]
+  \centering
+  \footnotesize
+  \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    \emph{Method} & \emph{Composition} & \emph{Abundance} & \emph{Probabilistic} & \emph{Contigs} & \emph{Published*}\\
+    \hline
+    CompostBin \parencite{Chatterji2008}& $\surd$  & $\surd$ & & & 2008 \\
+    \hline
+    SCIMM \parencite{Kelley2010} & $\surd$ & &$\surd$ &$\surd$ & 2010\\
+    \hline
+    AbundanceBin \parencite{Wu2011b} & & $\surd$ & $\surd$ & & 2011\\
+    \hline
+    TaxSOM \parencite{Weber2011} & $\surd$ & & & $\surd$ & 2011\\
+    \hline
+    MetaCluster & & & & & \\
+\parencite{Yang2010, Yang2010c, Leung2011, Wang2012, Wang2012h} & $\surd$ & $\surd$ & &$\surd$ & 2012\\
+    \hline
+    TOSS \parencite{Tanaseichuk2012, Tanaseichuk2012a} & $\surd$ & $\surd$ & $\surd$ & & 2012\\
+    \hline
+    MetaWatt \parencite{Strous2012a} & $\surd$ & &$\surd$ & $\surd$ & 2012\\
+    \hline
+  \end{tabular}
+  \caption{Comparison of existing clustering algorithms. *In the cases where multiple articles have been published presenting the algorithm, the latest year have been used.}
+\end{table}
+One of the earliest attempts to attack the problem of taxonomic characterisation of massive parallel sequencing metagenomic output was the PhyloPythia package. It is a classification approach, in contrast to clustering approaches, using solely genomic composition to classify sequence fragments to known taxonomic clades. A database of 340 sequenced genomes was used to train a Support Vector Machine, a supervised machine learning technique. The technique has proven to be effective, especially for fragments of medium length, $>5$kb, coming from organisms included in the training data, or for long fragments, $>10$kb, coming from organisms related to the ones included \parencite{Mchardy2007}.
+
+The CompostBin \parencite{Chatterji2008} algorithm uses genomic signatures, read coverages and phylogenetic markers to cluster metagenomic reads. It uses a semi-unsupervised heuristic approach involving principal component analysis. The data is divided iteratively until the suggested number of bins is reached or no further division is suitable. For the genomic signatures, hexamers are used, $k=6$, without further motivation. The algorithm's performance was mostly evaluated on simulated Sanger sequencing reads, with average length of 1000bp and the most complex data set containing 6 different microbes. The mean error rate per bin is reported and is about $10\%$ for the worst performances. One real metagenomic data set including $2$ known bins was also evaluated, and the algorithm's error rate was then about $9\%$. \parencite{Chatterji2008} This algorithm was designed for longer reads than used in most massive parallel sequencing techniques of today, and would probably perform worse on shorter reads due to the curse of dimensionality. The performance evaluation lack the large complex data sets needed to see if the algorithm would work in a real metagenomic sample.
+
+Instead of using $k$-mer frequencies, SCIMM (Sequence Clustering with Interpolated Markov Models) uses interpolated Markov models (IMMs) to cluster sequences based on the DNA composition. IMMs can adjust the model's complexity based on the data, suitable for metagenomic sequences as sequence coverage varies significantly between species, causing missing data for low abundant species. The performance of this approach is evaluated on multiple simulated data sets with up to $51$ different genomes and on a mock (in vitro) metagenomic community consisting of $10$ different strains. For each data set, the recall and precision is calculated and plotted. For the higher complexity simulated data sets, the number of clusters used in the algorithm was very low, only 2-6, while the number of strains was 47-51. This was motivated by the skewness of the data, where in one of the samples, a single strain accounted for almost $74\%$ of the nucleotides. The algorithm also performed worse for data sets with more genomes and shorter fragments \parencite{Kelley2010}.
+
+A recently developed method TaxSOM uses the machine learning technique Self Organising Maps (SOMs) to cluster metagenomic sequences. The algorithm uses tetranucleotide (k=4) frequencies that are z-transformed to correct for skewness. The reported specificity is very high for taxonomic levels down to genus, but is significantly lower on species level for data sets with medium to high complexity \parencite{Weber2011}.
+
+The binning program MetaCluster has been developed in several steps. It started as a relatively simple composition based binning algorithm where the fundamental idea was to use a small subset of all $k$-mers, chosen by a distance measure \parencite{Yang2010}. The second version included similarity based taxonomic annotation of the clusters \parencite{Yang2010c} while the third version combines a top-down clustering algorithm with a bottom-up merging method to dynamically choose the number of clusters \parencite{Leung2011}. Version four was modified to work better for communities with more species and shorter read lengths. This was accomplished in a pre-processing step prepended to the third version by estimating the number of species by an initial binning of reads using $l$-mers with $l\geq 35$ \parencite{Wang2012h}. The fifth version handles low-abundant species better through a usage of a larger $l$ to bin high abundant species and a smaller $l$ for low abundant ones \parencite{Wang2012}. MetaCluster 5.0 is one of very few clustering algorithms that is evaluated with a data set of high complexity (over 100 species in total). The performance on this data set is however limited to high abundant to medium abundant species, filtering out 85 low abundant species. For higher abundant species, both precision and sensitivity is relatively high \parencite{Wang2012}.
+
+Another program suite developed for clustering, TOSS,  was developed to work better for the short reads produced by massive parallel sequencing techniques. It uses a mixture of Poisson distributions to model $l$-mer occurrences in reads for clustering and separation of different abundant species \parencite{Tanaseichuk2012, Tanaseichuk2012a}. The performance of the algorithm is only evaluated on medium sized data sets with maximum 18 genomes. The comparison on that data set also showed that MetaCluster 5.0 performed better.
+
+Composition based clustering algorithms work well for fragments of 1000bp and longer, but reads from massive parallel sequencing machines are shorter. AbundanceBin tries to separate reads from genomes with different abundances using the $l$-mer approach. This approach is accurate for large differences in abundance, (more than 2:1), but the error rate increases drastically when the difference drops. The authors of the article that presents AbundanceBin concludes that their algorithm complements composition based binning and explores this statement by combining AbundanceBin with an early version of  MetaCluster. However, the version of MetaCluster available at that time demanded the number of clusters to be submitted manually and the approach was therefore only possible to work as a proof of concept \parencite{Wu2011b}. 
+
+MetaWatt is one of very few algorithms developed to cluster metagenomic contigs instead of reads. Since contigs are much longer than the reads, a compositional approach is possible. The algorithm is based on multivariate Gaussian model for tetranucleotides, $k=4$, where the clusters are generate dynamically \parencite{Strous2012a}. The performance of MetaWatt is evaluated on real metagenomics data sets, reporting recall and accuracy between $0.77$ and $0.94$, better than SCIMM on almost all data sets. 
+
+\section{Data Used}
+In this work, a few different data sets have been used.
